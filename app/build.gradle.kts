@@ -102,10 +102,14 @@ configure<ApplicationExtension> {
         create("releaseConfig") {
             enableV1Signing = true
             enableV2Signing = true
-            storeFile = file(project.findProperty("releaseStoreFile") as? String ?: "keystore")
-            storePassword = project.findProperty("releaseStorePassword") as? String ?: "password"
-            keyAlias = project.findProperty("releaseKeyAlias") as? String ?:  "alias"
-            keyPassword = project.findProperty("releaseKeyPassword") as? String ?:  "password"
+            val storeFilePath = project.findProperty("releaseStoreFile") as? String
+            val storeFileObj = storeFilePath?.let { file(it) }
+            if (storeFileObj != null && storeFileObj.exists() && storeFileObj.length() > 0) {
+                storeFile = storeFileObj
+                storePassword = project.findProperty("releaseStorePassword") as? String ?: ""
+                keyAlias = project.findProperty("releaseKeyAlias") as? String ?: ""
+                keyPassword = project.findProperty("releaseKeyPassword") as? String ?: ""
+            }
         }
     }
 
@@ -118,7 +122,10 @@ configure<ApplicationExtension> {
 //             vcsInfo.include = false
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs["releaseConfig"]
+            val relConfig = signingConfigs["releaseConfig"]
+            if (relConfig.storeFile != null && relConfig.storeFile!!.exists()) {
+                signingConfig = relConfig
+            }
         }
         getByName("debug") {
             resValue("string", "app_name", "Podcini.X Debug")
