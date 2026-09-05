@@ -496,13 +496,13 @@ class Media3Player(playerId: Int, val lr: Int) : MediaPlayerBase() {
 
 //        val upstreamFactory = OkHttpDataSource.Factory(getOKHttpClient())
         val baseHttpDataSourceFactory = OkHttpDataSource.Factory(getOKHttpClient())
-        val upstreamFactory = DefaultDataSource.Factory(context, baseHttpDataSourceFactory)
         val cacheDataSourceFactory = CacheDataSource.Factory()
             .setCache(getCache())
-            .setUpstreamDataSourceFactory(upstreamFactory) // Pass the factory directly!
+            .setUpstreamDataSourceFactory(baseHttpDataSourceFactory)
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         val recordingFactory = SegmentSavingDataSourceFactory(cacheDataSourceFactory)
-        val mediaSourceFactory = DefaultMediaSourceFactory(context).setDataSourceFactory(recordingFactory)
+        val defaultDataSourceFactory = DefaultDataSource.Factory(context, recordingFactory)
+        val mediaSourceFactory = DefaultMediaSourceFactory(context).setDataSourceFactory(defaultDataSourceFactory)
         
         exoPlayer = ExoPlayer.Builder(context, renderersFactory)
             .setMediaSourceFactory(mediaSourceFactory)
