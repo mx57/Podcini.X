@@ -605,10 +605,11 @@ class Media3Player(playerId: Int, val lr: Int) : MediaPlayerBase() {
             }
             needChangeOffload = false
         }
-        if (isCasting) castPlayer?.setMediaItem(mediaItem!!, curEpisode!!.position.toLong())
+        val startPos = curEpisode?.let { positionWithRewind(it.position, it.lastPlayedTime).toLong() } ?: C.TIME_UNSET
+        if (isCasting) castPlayer?.setMediaItem(mediaItem!!, if (curEpisode != null) curEpisode!!.position.toLong() else C.TIME_UNSET)
         else {
-            if (mediaSource != null) exoPlayer?.setMediaSource(mediaSource!!, positionWithRewind(curEpisode!!.position, curEpisode!!.lastPlayedTime).toLong())
-            else castPlayer?.setMediaItem(mediaItem!!, positionWithRewind(curEpisode!!.position, curEpisode!!.lastPlayedTime).toLong())
+            if (mediaSource != null) exoPlayer?.setMediaSource(mediaSource!!, startPos)
+            else if (mediaItem != null) exoPlayer?.setMediaItem(mediaItem!!, startPos)
         }
         castPlayer?.prepare()
     }

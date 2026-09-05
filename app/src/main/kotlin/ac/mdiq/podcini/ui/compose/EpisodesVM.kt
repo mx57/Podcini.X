@@ -402,7 +402,7 @@ fun EpisodeLazyColumn(episodes: List<Episode>, feed: Feed? = null, isExternal: B
                                         if (episode.rating != Rating.UNRATED.code) Icon(imageVector = ImageVector.vectorResource(Rating.fromCode(episode.rating).res), tint = MaterialTheme.colorScheme.tertiary, contentDescription = "rating", modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).width(16.dp).height(16.dp))
                                         if (episode.comment.isNotBlank()) Icon(imageVector = ImageVector.vectorResource(R.drawable.baseline_comment_24), tint = MaterialTheme.colorScheme.tertiary, contentDescription = "comment", modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).width(16.dp).height(16.dp))
                                         if (episode.getMediaType() == MediaType.VIDEO) Icon(imageVector = ImageVector.vectorResource(R.drawable.ic_videocam), tint = textColor, contentDescription = "isVideo", modifier = Modifier.width(16.dp).height(16.dp))
-                                        val dateSizeText = remember(episode.id) {
+                                        val dateSizeText = remember(episode.id, episode.pubDate, episode.duration, episode.size, episode.viewCount, episode.likeCount) {
                                             " · " + formatDateTimeFlex(episode.pubDate) + " · " + durationStringFull(episode.duration) +
                                                     (if (episode.size > 0) " · " + formatShortFileSize(episode.size) else "") +
                                                     (if (episode.viewCount > 0) " · " + formatLargeInteger(episode.viewCount) else "") +
@@ -426,19 +426,19 @@ fun EpisodeLazyColumn(episodes: List<Episode>, feed: Feed? = null, isExternal: B
                                             Icon(imageVector = ImageVector.vectorResource(playState.res), tint = playState.color ?: MaterialTheme.colorScheme.tertiary, contentDescription = "playState", modifier = Modifier.background(if (episode.playState >= EpisodeState.SKIPPED.code) Color.Green.copy(alpha = 0.6f) else MaterialTheme.colorScheme.surface).width(16.dp).height(16.dp))
                                             if (episode.rating != Rating.UNRATED.code) Icon(imageVector = ImageVector.vectorResource(Rating.fromCode(episode.rating).res), tint = MaterialTheme.colorScheme.tertiary, contentDescription = "rating", modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).width(16.dp).height(16.dp))
                                             if (episode.getMediaType() == MediaType.VIDEO) Icon(imageVector = ImageVector.vectorResource(R.drawable.ic_videocam), tint = textColor, contentDescription = "isVideo", modifier = Modifier.width(16.dp).height(16.dp))
-                                            val dateSizeText = remember { " · " + durationStringFull(episode.duration) + (if (episode.size > 0) " · " + formatShortFileSize(episode.size) else "") }
+                                            val dateSizeText = remember(episode.id, episode.duration, episode.size) { " · " + durationStringFull(episode.duration) + (if (episode.size > 0) " · " + formatShortFileSize(episode.size) else "") }
                                             Text(dateSizeText, color = textColor, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         }
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            val dateSizeText = remember { formatDateTimeFlex(episode.pubDate) }
+                                            val dateSizeText = remember(episode.id, episode.pubDate) { formatDateTimeFlex(episode.pubDate) }
                                             Text(dateSizeText, color = textColor, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                             if (episode.viewCount > 0) {
-                                                val viewText = remember { " · " + formatLargeInteger(episode.viewCount) }
+                                                val viewText = remember(episode.id, episode.viewCount) { " · " + formatLargeInteger(episode.viewCount) }
                                                 Text(viewText, color = textColor, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                                 Icon(imageVector = ImageVector.vectorResource(R.drawable.baseline_people_alt_24), tint = textColor, contentDescription = "people", modifier = Modifier.width(16.dp).height(16.dp))
                                             }
                                             if (episode.likeCount > 0) {
-                                                val likeText = remember { " · " + formatLargeInteger(episode.likeCount) }
+                                                val likeText = remember(episode.id, episode.likeCount) { " · " + formatLargeInteger(episode.likeCount) }
                                                 Text(likeText, color = textColor, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                                 Icon(imageVector = ImageVector.vectorResource(R.drawable.baseline_thumb_up_24), tint = textColor, contentDescription = "likes", modifier = Modifier.width(16.dp).height(16.dp))
                                             }
@@ -485,7 +485,14 @@ fun EpisodeLazyColumn(episodes: List<Episode>, feed: Feed? = null, isExternal: B
                                         else -> episodeForInfo = episode
                                     }
                                 }) {
-                                    AsyncImage(model = ImageRequest.Builder(context).data(episode.imageLocation(forceFeedImage)).memoryCachePolicy(CachePolicy.ENABLED).build(), placeholder = painterResource(R.drawable.ic_launcher_foreground), error = painterResource(R.drawable.ic_launcher_foreground), contentDescription = "imgvCover", modifier = Modifier.fillMaxSize())
+                                    val imgLoc = remember(episode.id, episode.imageUrl, forceFeedImage) { episode.imageLocation(forceFeedImage) }
+                                    val imgRequest = remember(imgLoc, context) {
+                                        ImageRequest.Builder(context)
+                                            .data(imgLoc)
+                                            .memoryCachePolicy(CachePolicy.ENABLED)
+                                            .build()
+                                    }
+                                    AsyncImage(model = imgRequest, placeholder = painterResource(R.drawable.ic_launcher_foreground), error = painterResource(R.drawable.ic_launcher_foreground), contentDescription = "imgvCover", modifier = Modifier.fillMaxSize())
                                     if (episode.feed != null && episode.feed!!.useFeedImage() && episode.feed!!.rating != Rating.UNRATED.code)
                                         Icon(imageVector = ImageVector.vectorResource(Rating.fromCode(episode.feed!!.rating).res), tint = buttonColor, contentDescription = "rating", modifier = Modifier.width(imageWidth/4).height(imageHeight/4).align(Alignment.BottomStart).background(MaterialTheme.colorScheme.tertiaryContainer) )
                                 }
